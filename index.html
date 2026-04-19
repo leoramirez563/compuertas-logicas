@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulador Lógico Profesional</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="toolbar">
+        <div class="group">
+            <button onclick="configurarCompuerta('AND')">AND</button>
+            <button onclick="configurarCompuerta('OR')">OR</button>
+            <button onclick="configurarCompuerta('NOT')">NOT</button>
+            <button onclick="configurarCompuerta('NAND')">NAND</button>
+            <button onclick="configurarCompuerta('NOR')">NOR</button>
+        </div>
+        <div class="group">
+            <button onclick="configurarVariable()" style="background: #3498db; color: white;">Variable</button>
+            <button onclick="mostrarTablaVerdad()" style="background: #27ae60; color: white; font-weight: bold;">📊 GENERAR TABLA</button>
+        </div>
+    </div>
+
+    <div id="canvas">
+        <svg id="cable-layer"></svg>
+    </div>
+
+    <div id="trash">🗑️</div>
+
+    <div id="modalConfig" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2 id="modalTitle">Configurar</h2>
+            <div id="seccionVariable" style="display:none;">
+                <label>Nombre:</label>
+                <input type="text" id="tagTextModal" placeholder="Ej: A, B, F..." maxlength="3">
+                <label style="margin-top:10px; display:block;">Tipo:</label>
+                <select id="tipoTerminal" onchange="actualizarEstadoInhabilitado()">
+                    <option value="entrada">Entrada</option>
+                    <option value="salida">Salida Final</option>
+                </select>
+                <label style="margin-top:10px; display:block;">Estado inicial:</label>
+                <select id="estadoInicial">
+                    <option value="0">0 (LOW)</option>
+                    <option value="1">1 (HIGH)</option>
+                </select>
+            </div>
+            <div id="seccionCompuerta" style="display:none;">
+                <label>Entradas:</label>
+                <input type="number" id="numEntradas" min="1" max="8" value="2">
+            </div>
+            <div style="margin-top: 20px;">
+                <button onclick="confirmarCreacion()">Crear</button>
+                <button onclick="cerrarModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="truth-table-container" style="display:none;">
+        <div class="table-title">TABLA DE VERDAD</div>
+        <div class="table-scroll">
+            <table id="truth-table">
+                <thead><tr id="table-header"></tr></thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
