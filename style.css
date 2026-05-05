@@ -205,3 +205,14 @@ button, select, input {
 body {
     overscroll-behavior-y: contain;
 }
+/* Área táctil de los conectores */
+.magnetic-edge {
+    r: 25 !important; /* Aumenta el radio de captura para el dedo */
+    fill: rgba(255, 255, 255, 0.01); /* Casi invisible pero detectable */
+    cursor: crosshair;
+}
+
+/* Opcional: que brillen cuando pasas el cable cerca */
+.magnetic-edge:hover {
+    fill: rgba(85, 239, 196, 0.3);
+}

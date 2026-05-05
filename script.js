@@ -35,10 +35,8 @@ function confirmarCreacion() {
 
 // --- CREACIÓN ---
 function spawn(div) {
-    // Si la pantalla es pequeña, usa una posición menor
-    const x = window.innerWidth < 600 ? 50 : 150;
-    const y = window.innerWidth < 600 ? 50 : 150;
-    
+    const x = window.innerWidth < 600 ? 30 : 150;
+    const y = window.innerWidth < 600 ? 30 : 150;
     div.style.left = x + "px"; 
     div.style.top = y + "px";
     document.getElementById('canvas').appendChild(div);
@@ -58,8 +56,8 @@ function crearTerminal(texto, esSalida, estado) {
         <text class="res-val" x="50" y="72" font-family="Arial" font-size="22" font-weight="bold" text-anchor="middle" fill="${estado == 1 ? '#27ae60' : '#e74c3c'}">${esSalida ? '' : estado}</text>
         ${esSalida ? `<text class="equation-text" x="50" y="110" font-family="serif" font-size="14" font-style="italic" text-anchor="middle" fill="#2c3e50"></text>` : ''}
         ${esSalida ? 
-            `<circle class="magnetic-edge in" data-id="in-1" cx="15" cy="50" r="22" fill="transparent" style="cursor:default"/>` :
-            `<circle class="magnetic-edge out" data-id="out-1" cx="85" cy="50" r="22" fill="transparent" style="cursor:default"/>`
+            `<circle class="magnetic-edge in" data-id="in-1" cx="15" cy="50" r="22" fill="transparent"/>` :
+            `<circle class="magnetic-edge out" data-id="out-1" cx="85" cy="50" r="22" fill="transparent"/>`
         }
     </svg>`;
     spawn(div);
@@ -79,10 +77,10 @@ function crearCompuerta(tipo, nEnt) {
     for (let i = 1; i <= nEnt; i++) {
         let y = i * gap;
         svg += `<line x1="0" y1="${y}" x2="${tipo.includes('OR') ? 22 : 28}" y2="${y}" stroke="black" stroke-width="3"/>
-                <circle class="magnetic-edge in" data-id="in-${i}" cx="0" cy="${y}" r="12" fill="transparent" style="cursor:default"/>`;
+                <circle class="magnetic-edge in" data-id="in-${i}" cx="0" cy="${y}" r="15" fill="transparent"/>`;
     }
     svg += `<line x1="${tipo==='NOT'?75:70}" y1="${centroY}" x2="100" y2="${centroY}" stroke="black" stroke-width="3"/>
-            <circle class="magnetic-edge out" data-id="out-1" cx="100" cy="${centroY}" r="12" fill="transparent" style="cursor:default"/>`;
+            <circle class="magnetic-edge out" data-id="out-1" cx="100" cy="${centroY}" r="15" fill="transparent"/>`;
     
     const estilo = `fill="${color}" stroke="#2c3e50" stroke-width="3"`;
     if (tipo.includes('AND')) svg += `<path d="M28 5 h22 a${centroY-5} ${centroY-5} 0 0 1 0 ${alto-10} h-22 z" ${estilo}/>`;
@@ -95,17 +93,11 @@ function crearCompuerta(tipo, nEnt) {
     spawn(div);
 }
 
-// --- ARRASTRE ---
+// --- ARRASTRE Y EVENTOS ---
 function hacerArrastrable(elm) {
     let p1, p2, p3, p4;
 
-    // Función unificada para manejar el inicio del movimiento
-function hacerArrastrable(elm) {
-    let p1, p2, p3, p4;
-
-    // Función unificada para manejar el inicio del movimiento
     const iniciarArrastre = (e) => {
-        // Normalizar evento (obtener datos si es touch o mouse)
         const clienteX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
         const clienteY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
 
@@ -134,12 +126,7 @@ function hacerArrastrable(elm) {
         const mover = (ev) => {
             const movX = ev.type.includes('touch') ? ev.touches[0].clientX : ev.clientX;
             const movY = ev.type.includes('touch') ? ev.touches[0].clientY : ev.clientY;
-            
-            p1 = p3 - movX; 
-            p2 = p4 - movY; 
-            p3 = movX; 
-            p4 = movY;
-            
+            p1 = p3 - movX; p2 = p4 - movY; p3 = movX; p4 = movY;
             elm.style.top = (elm.offsetTop - p2) + "px"; 
             elm.style.left = (elm.offsetLeft - p1) + "px";
             actualizarCables();
@@ -148,7 +135,6 @@ function hacerArrastrable(elm) {
         const detener = () => {
             document.onmousemove = document.ontouchmove = null;
             document.onmouseup = document.ontouchend = null;
-            
             const tr = document.getElementById('trash').getBoundingClientRect();
             if(p3 > tr.left && p3 < tr.right && p4 > tr.top && p4 < tr.bottom) {
                 conexiones = conexiones.filter(c => { 
@@ -159,108 +145,115 @@ function hacerArrastrable(elm) {
                 actualizarSimulacion();
             }
         };
-
         document.onmousemove = document.ontouchmove = mover;
         document.onmouseup = document.ontouchend = detener;
     };
-
-    elm.onmousedown = iniciarArrastre;
-    elm.ontouchstart = iniciarArrastre;
+    elm.onmousedown = elm.ontouchstart = iniciarArrastre;
 }
 
-document.addEventListener('mousemove', (e) => {
+// --- LOGICA DE CABLES ---
+const moverCable = (e) => {
     if (!cableTemporal) return;
     const cr = document.getElementById('canvas').getBoundingClientRect();
-    cableTemporal.setAttribute("x1", nodoOrigen.x); cableTemporal.setAttribute("y1", nodoOrigen.y);
-    cableTemporal.setAttribute("x2", e.clientX-cr.left); cableTemporal.setAttribute("y2", e.clientY-cr.top);
-});
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - cr.left;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) - cr.top;
+    cableTemporal.setAttribute("x1", nodoOrigen.x);
+    cableTemporal.setAttribute("y1", nodoOrigen.y);
+    cableTemporal.setAttribute("x2", x);
+    cableTemporal.setAttribute("y2", y);
+    if(e.touches) e.preventDefault();
+};
 
-document.addEventListener('mouseup', (e) => {
+const soltarCable = (e) => {
     if (!cableTemporal) return;
-    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const cX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+    const cY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+    
+    cableTemporal.style.display = 'none';
+    const target = document.elementFromPoint(cX, cY);
+    cableTemporal.style.display = 'block';
+    
     if (target && target.classList.contains('magnetic-edge')) {
         const destEl = target.closest('.compuerta'), destEsOut = target.classList.contains('out');
         if (destEl.id !== nodoOrigen.id && destEsOut !== nodoOrigen.esOut) {
             const emisor = nodoOrigen.esOut ? nodoOrigen : { id: destEl.id, nodeId: target.getAttribute('data-id') };
             const receptor = !nodoOrigen.esOut ? nodoOrigen : { id: destEl.id, nodeId: target.getAttribute('data-id') };
             const nuevoCable = cableTemporal;
-            nuevoCable.addEventListener('dblclick', () => {
-                conexiones = conexiones.filter(c => c.el !== nuevoCable);
-                nuevoCable.remove();
-                actualizarSimulacion();
+            nuevoCable.setAttribute("stroke", "#55efc4");
+            
+            const borrar = () => { conexiones = conexiones.filter(c => c.el !== nuevoCable); nuevoCable.remove(); actualizarSimulacion(); };
+            nuevoCable.addEventListener('dblclick', borrar);
+            nuevoCable.addEventListener('touchstart', (ev) => {
+                if (!nuevoCable.lC) { nuevoCable.lC = Date.now(); return; }
+                if (Date.now() - nuevoCable.lC < 300) borrar();
+                nuevoCable.lC = Date.now();
             });
+
             conexiones.push({ from: emisor.id, fromNode: emisor.nodeId, to: receptor.id, toNode: receptor.nodeId, el: nuevoCable });
-            actualizarCables();
-            actualizarSimulacion();
+            actualizarCables(); actualizarSimulacion();
         } else cableTemporal.remove();
     } else cableTemporal.remove();
     cableTemporal = null;
-});
+};
+
+document.addEventListener('mousemove', moverCable);
+document.addEventListener('touchmove', moverCable, { passive: false });
+document.addEventListener('mouseup', soltarCable);
+document.addEventListener('touchend', soltarCable);
 
 function actualizarCables() {
     const cr = document.getElementById('canvas').getBoundingClientRect();
     conexiones.forEach(c => {
         const f = document.getElementById(c.from), t = document.getElementById(c.to);
         if (f && t) {
-            const nF = f.querySelector(`[data-id="${c.fromNode}"]`).getBoundingClientRect(), nT = t.querySelector(`[data-id="${c.toNode}"]`).getBoundingClientRect();
-            c.el.setAttribute("x1", (nF.left+nF.width/2)-cr.left); c.el.setAttribute("y1", (nF.top+nF.height/2)-cr.top);
-            c.el.setAttribute("x2", (nT.left+nT.width/2)-cr.left); c.el.setAttribute("y2", (nT.top+nT.height/2)-cr.top);
-            c.el.setAttribute("stroke", "#55efc4");
+            const nF = f.querySelector(`[data-id="${c.fromNode}"]`).getBoundingClientRect();
+            const nT = t.querySelector(`[data-id="${c.toNode}"]`).getBoundingClientRect();
+            c.el.setAttribute("x1", (nF.left + nF.width/2)-cr.left); c.el.setAttribute("y1", (nF.top + nF.height/2)-cr.top);
+            c.el.setAttribute("x2", (nT.left + nT.width/2)-cr.left); c.el.setAttribute("y2", (nT.top + nT.height/2)-cr.top);
         }
     });
 }
 
-// --- MOTOR DE ECUACIÓN Y LÓGICA ---
-function construirEcuacion(idComponente) {
-    const el = document.getElementById(idComponente);
+// --- LÓGICA DE SIMULACIÓN ---
+function construirEcuacion(idComp) {
+    const el = document.getElementById(idComp);
     if (!el) return "?";
     if (el.classList.contains('variable')) return el.dataset.nombre;
-    
-    // Para la terminal de salida, buscamos qué tiene conectado
     if (el.classList.contains('terminal-salida')) {
-        const con = conexiones.find(c => c.to === idComponente || c.from === idComponente);
-        if (!con) return "...";
-        let otroId = con.from === idComponente ? con.to : con.from;
-        return construirEcuacion(otroId);
+        const con = conexiones.find(c => c.to === idComp || c.from === idComp);
+        return con ? construirEcuacion(con.from === idComp ? con.to : con.from) : "...";
     }
-
-    const hijos = conexiones.filter(c => c.to === idComponente).map(c => construirEcuacion(c.from));
+    const hijos = conexiones.filter(c => c.to === idComp).map(c => construirEcuacion(c.from));
     if (hijos.length === 0) return "...";
-    
-    const tipo = el.dataset.tipo;
-    if (tipo === 'NOT') return `~(${hijos[0]})`;
-    if (tipo === 'AND') return `(${hijos.join('·')})`;
-    if (tipo === 'OR') return `(${hijos.join('+')})`;
-    if (tipo === 'NAND') return `~(${hijos.join('·')})`;
-    if (tipo === 'NOR') return `~(${hijos.join('+')})`;
+    const t = el.dataset.tipo;
+    if (t === 'NOT') return `~(${hijos[0]})`;
+    if (t === 'AND') return `(${hijos.join('·')})`;
+    if (t === 'OR') return `(${hijos.join('+')})`;
+    if (t === 'NAND') return `~(${hijos.join('·')})`;
+    if (t === 'NOR') return `~(${hijos.join('+')})`;
     return "";
 }
 
 function simular(entradas) {
-    let estados = {...entradas};
-    let comps = Array.from(document.querySelectorAll('.compuerta'));
-    
+    let estados = {...entradas}, comps = Array.from(document.querySelectorAll('.compuerta'));
     for (let i = 0; i < 20; i++) {
         comps.forEach(el => {
             if (el.classList.contains('variable')) return;
-            
-            // Lógica especial para clonar estado en terminales de salida
             if (el.classList.contains('terminal-salida')) {
                 const con = conexiones.find(c => c.to === el.id || c.from === el.id);
                 if (con) {
-                    let otroId = (con.from === el.id) ? con.to : con.from;
-                    if (estados[otroId] !== undefined) estados[el.id] = estados[otroId];
+                    let otro = (con.from === el.id) ? con.to : con.from;
+                    if (estados[otro] !== undefined) estados[el.id] = estados[otro];
                 }
                 return;
             }
-
-            const señales = conexiones.filter(c => c.to === el.id).map(c => estados[c.from] ?? 0);
+            const s = conexiones.filter(c => c.to === el.id).map(c => estados[c.from] ?? 0);
             const t = el.dataset.tipo;
-            if (t === 'AND') estados[el.id] = (señales.length > 0 && señales.every(v => v === 1)) ? 1 : 0;
-            else if (t === 'OR') estados[el.id] = (señales.length > 0 && señales.some(v => v === 1)) ? 1 : 0;
-            else if (t === 'NOT') estados[el.id] = (señales.length > 0) ? (señales[0] === 1 ? 0 : 1) : 1;
-            else if (t === 'NAND') estados[el.id] = (señales.length > 0 && señales.every(v => v === 1)) ? 0 : 1;
-            else if (t === 'NOR') estados[el.id] = (señales.length > 0 && señales.some(v => v === 1)) ? 0 : 1;
+            if (t === 'AND') estados[el.id] = (s.length > 0 && s.every(v => v === 1)) ? 1 : 0;
+            else if (t === 'OR') estados[el.id] = (s.length > 0 && s.some(v => v === 1)) ? 1 : 0;
+            else if (t === 'NOT') estados[el.id] = (s.length > 0) ? (s[0] === 1 ? 0 : 1) : 1;
+            else if (t === 'NAND') estados[el.id] = (s.length > 0 && s.every(v => v === 1)) ? 0 : 1;
+            else if (t === 'NOR') estados[el.id] = (s.length > 0 && s.some(v => v === 1)) ? 0 : 1;
         });
     }
     return estados;
@@ -270,86 +263,42 @@ function actualizarSimulacion() {
     let inputs = {};
     document.querySelectorAll('.variable').forEach(v => {
         inputs[v.id] = parseInt(v.dataset.estado);
-        const txtRes = v.querySelector('.res-val');
-        if (txtRes) {
-            txtRes.textContent = v.dataset.estado;
-            txtRes.setAttribute('fill', v.dataset.estado == 1 ? '#27ae60' : '#e74c3c');
-        }
+        const tr = v.querySelector('.res-val');
+        if (tr) { tr.textContent = v.dataset.estado; tr.setAttribute('fill', v.dataset.estado == 1 ? '#27ae60' : '#e74c3c'); }
     });
-
     const res = simular(inputs);
-
     document.querySelectorAll('.terminal-salida').forEach(s => {
-        const con = conexiones.find(c => c.to === s.id || c.from === s.id);
-        const txtRes = s.querySelector('.res-val');
-        const txtEq = s.querySelector('.equation-text');
-        
-        if (txtRes) {
-            if (con) {
-                const val = res[s.id] !== undefined ? res[s.id] : 0;
-                txtRes.textContent = val;
-                txtRes.setAttribute('fill', val == 1 ? '#27ae60' : '#e74c3c');
-                txtRes.style.display = "block"; // Forzar visibilidad
-            } else {
-                txtRes.textContent = "";
-            }
+        const tr = s.querySelector('.res-val'), te = s.querySelector('.equation-text'), con = conexiones.find(c => c.to === s.id || c.from === s.id);
+        if (tr) { 
+            const val = res[s.id] ?? 0;
+            tr.textContent = con ? val : "";
+            tr.setAttribute('fill', val == 1 ? '#27ae60' : '#e74c3c');
         }
-        if (txtEq) {
-            txtEq.textContent = con ? `${s.dataset.nombre} = ${construirEcuacion(s.id)}` : "";
-        }
+        if (te) te.textContent = con ? `${s.dataset.nombre} = ${construirEcuacion(s.id)}` : "";
     });
 }
 
 function mostrarTablaVerdad() {
-    const todosLosCirculos = Array.from(document.querySelectorAll('.variable'));
-    const outs = Array.from(document.querySelectorAll('.terminal-salida'));
-
-    // Agrupamos por nombre (A, B, C, D) para manejar los 9 círculos como 4 variables
-    const nombresUnicos = [...new Set(todosLosCirculos.map(v => v.dataset.nombre))].sort();
-    const totalVars = nombresUnicos.length;
-
-    if (totalVars === 0 || outs.length === 0) return;
-
-    const h = document.getElementById('table-header');
-    const b = document.getElementById('table-body');
+    const vars = Array.from(document.querySelectorAll('.variable')), outs = Array.from(document.querySelectorAll('.terminal-salida'));
+    const nombres = [...new Set(vars.map(v => v.dataset.nombre))].sort();
+    if (nombres.length === 0 || outs.length === 0) return;
+    const h = document.getElementById('table-header'), b = document.getElementById('table-body');
     h.innerHTML = ''; b.innerHTML = '';
-
-    // Encabezados
-    nombresUnicos.forEach(nom => h.innerHTML += `<th>${nom}</th>`);
-    outs.forEach(s => h.innerHTML += `<th>${s.dataset.nombre}</th>`);
-
-    const totalFilas = Math.pow(2, totalVars);
-
-    for (let i = 0; i < totalFilas; i++) {
-        const bits = i.toString(2).padStart(totalVars, '0').split('').map(Number);
-        let valPrueba = {};
-        
-        nombresUnicos.forEach((nom, idx) => {
-            const circulos = todosLosCirculos.filter(v => v.dataset.nombre === nom);
-            circulos.forEach(c => valPrueba[c.id] = bits[idx]);
-        });
-
-        const res = simular(valPrueba);
-        const tr = document.createElement('tr');
-
-        // Entradas (0 y 1)
-        bits.forEach(bit => {
-            tr.innerHTML += `<td style="opacity: 0.7">${bit}</td>`;
-        });
-
-        // Salidas coloreadas
-        outs.forEach(s => {
-            const val = res[s.id] !== undefined ? res[s.id] : 0;
-            const color = val ? '#2ecc71' : '#e74c3c';
-            tr.innerHTML += `<td style="color:${color}; font-weight:bold">${val}</td>`;
-        });
-
+    nombres.forEach(n => h.innerHTML += `<th>${n}</th>`);
+    outs.forEach(o => h.innerHTML += `<th>${o.dataset.nombre}</th>`);
+    const filas = Math.pow(2, nombres.length);
+    for (let i = 0; i < filas; i++) {
+        const bits = i.toString(2).padStart(nombres.length, '0').split('').map(Number);
+        let p = {};
+        nombres.forEach((n, idx) => { vars.filter(v => v.dataset.nombre === n).forEach(c => p[c.id] = bits[idx]); });
+        const r = simular(p), tr = document.createElement('tr');
+        bits.forEach(bit => tr.innerHTML += `<td>${bit}</td>`);
+        outs.forEach(o => { const val = r[o.id] ?? 0; tr.innerHTML += `<td style="color:${val?'#2ecc71':'#e74c3c'};font-weight:bold">${val}</td>`; });
         b.appendChild(tr);
     }
     document.getElementById('truth-table-container').style.display = 'block';
 }
 
 function actualizarEstadoInhabilitado() {
-    const tipo = document.getElementById('tipoTerminal').value;
-    document.getElementById('estadoInicial').disabled = (tipo === 'salida');
+    document.getElementById('estadoInicial').disabled = (document.getElementById('tipoTerminal').value === 'salida');
 }
