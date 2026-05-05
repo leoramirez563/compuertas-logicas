@@ -93,32 +93,70 @@ function crearCompuerta(tipo, nEnt) {
 // --- ARRASTRE ---
 function hacerArrastrable(elm) {
     let p1, p2, p3, p4;
-    elm.onmousedown = function(e) {
+
+    // Función unificada para manejar el inicio del movimiento
+    const iniciarArrastre = (e) => {
+        // Normalizar evento (obtener datos si es touch o mouse)
+        const clienteX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+        const clienteY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+
         if (e.target.classList.contains('magnetic-edge')) {
-            e.stopPropagation();
+            if (e.type.includes('mouse')) e.stopPropagation(); 
             const r = e.target.getBoundingClientRect(), cr = document.getElementById('canvas').getBoundingClientRect();
-            nodoOrigen = { id: elm.id, nodeId: e.target.getAttribute('data-id'), x: (r.left+r.width/2)-cr.left, y: (r.top+r.height/2)-cr.top, esOut: e.target.classList.contains('out') };
+            
+            nodoOrigen = { 
+                id: elm.id, 
+                nodeId: e.target.getAttribute('data-id'), 
+                x: (r.left + r.width / 2) - cr.left, 
+                y: (r.top + r.height / 2) - cr.top, 
+                esOut: e.target.classList.contains('out') 
+            };
+            
             cableTemporal = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            cableTemporal.setAttribute("stroke", "#ff7675"); cableTemporal.setAttribute("stroke-width", "4");
+            cableTemporal.setAttribute("stroke", "#ff7675"); 
+            cableTemporal.setAttribute("stroke-width", "4");
             document.getElementById('cable-layer').appendChild(cableTemporal);
             return;
         }
-        p3 = e.clientX; p4 = e.clientY;
-        document.onmousemove = (ev) => {
-            p1 = p3 - ev.clientX; p2 = p4 - ev.clientY; p3 = ev.clientX; p4 = ev.clientY;
-            elm.style.top = (elm.offsetTop - p2) + "px"; elm.style.left = (elm.offsetLeft - p1) + "px";
+
+        p3 = clienteX; 
+        p4 = clienteY;
+
+        const mover = (ev) => {
+            const movX = ev.type.includes('touch') ? ev.touches[0].clientX : ev.clientX;
+            const movY = ev.type.includes('touch') ? ev.touches[0].clientY : ev.clientY;
+            
+            p1 = p3 - movX; 
+            p2 = p4 - movY; 
+            p3 = movX; 
+            p4 = movY;
+            
+            elm.style.top = (elm.offsetTop - p2) + "px"; 
+            elm.style.left = (elm.offsetLeft - p1) + "px";
             actualizarCables();
         };
-        document.onmouseup = () => {
-            document.onmousemove = null;
+
+        const detener = () => {
+            document.onmousemove = document.ontouchmove = null;
+            document.onmouseup = document.ontouchend = null;
+            
             const tr = document.getElementById('trash').getBoundingClientRect();
             if(p3 > tr.left && p3 < tr.right && p4 > tr.top && p4 < tr.bottom) {
-                conexiones = conexiones.filter(c => { if(c.from===elm.id || c.to===elm.id){c.el.remove(); return false;} return true; });
+                conexiones = conexiones.filter(c => { 
+                    if(c.from === elm.id || c.to === elm.id){ c.el.remove(); return false; } 
+                    return true; 
+                });
                 elm.remove();
                 actualizarSimulacion();
             }
         };
+
+        document.onmousemove = document.ontouchmove = mover;
+        document.onmouseup = document.ontouchend = detener;
     };
+
+    elm.onmousedown = iniciarArrastre;
+    elm.ontouchstart = iniciarArrastre;
 }
 
 document.addEventListener('mousemove', (e) => {
