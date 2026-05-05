@@ -197,10 +197,14 @@ function actualizarCables() {
     conexiones.forEach(c => {
         const f = document.getElementById(c.from), t = document.getElementById(c.to);
         if (f && t) {
-            const nF = f.querySelector(`[data-id="${c.fromNode}"]`).getBoundingClientRect(), nT = t.querySelector(`[data-id="${c.toNode}"]`).getBoundingClientRect();
-            c.el.setAttribute("x1", (nF.left+nF.width/2)-cr.left); c.el.setAttribute("y1", (nF.top+nF.height/2)-cr.top);
-            c.el.setAttribute("x2", (nT.left+nT.width/2)-cr.left); c.el.setAttribute("y2", (nT.top+nT.height/2)-cr.top);
-            c.el.setAttribute("stroke", "#55efc4");
+            const nF = f.querySelector(`[data-id="${c.fromNode}"]`).getBoundingClientRect();
+            const nT = t.querySelector(`[data-id="${c.toNode}"]`).getBoundingClientRect();
+            
+            // Usamos el centro exacto que ve el usuario en pantalla
+            c.el.setAttribute("x1", (nF.left + nF.width/2) - cr.left);
+            c.el.setAttribute("y1", (nF.top + nF.height/2) - cr.top);
+            c.el.setAttribute("x2", (nT.left + nT.width/2) - cr.left);
+            c.el.setAttribute("y2", (nT.top + nT.height/2) - cr.top);
         }
     });
 }
