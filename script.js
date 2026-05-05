@@ -35,7 +35,12 @@ function confirmarCreacion() {
 
 // --- CREACIÓN ---
 function spawn(div) {
-    div.style.left = "150px"; div.style.top = "150px";
+    // Si la pantalla es pequeña, usa una posición menor
+    const x = window.innerWidth < 600 ? 50 : 150;
+    const y = window.innerWidth < 600 ? 50 : 150;
+    
+    div.style.left = x + "px"; 
+    div.style.top = y + "px";
     document.getElementById('canvas').appendChild(div);
     hacerArrastrable(div);
 }
