@@ -95,6 +95,10 @@ function hacerArrastrable(elm) {
     let p1, p2, p3, p4;
 
     // Función unificada para manejar el inicio del movimiento
+function hacerArrastrable(elm) {
+    let p1, p2, p3, p4;
+
+    // Función unificada para manejar el inicio del movimiento
     const iniciarArrastre = (e) => {
         // Normalizar evento (obtener datos si es touch o mouse)
         const clienteX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
